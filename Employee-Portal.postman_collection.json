@@ -1,0 +1,264 @@
+{
+  "info": {
+    "name": "Employee Management Portal",
+    "description": "Full API coverage for the Employee Management Portal. Run 'Login' first — it auto-saves the access/refresh tokens into collection variables used by every other request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "employeeId", "value": "1" },
+    { "key": "departmentId", "value": "1" },
+    { "key": "leaveId", "value": "1" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const data = pm.response.json();",
+                "if (data.accessToken) pm.collectionVariables.set('accessToken', data.accessToken);",
+                "if (data.refreshToken) pm.collectionVariables.set('refreshToken', data.refreshToken);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const data = pm.response.json();",
+                "if (data.accessToken) pm.collectionVariables.set('accessToken', data.accessToken);",
+                "if (data.refreshToken) pm.collectionVariables.set('refreshToken', data.refreshToken);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/logout",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Current User (/me)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" }
+        }
+      ]
+    },
+    {
+      "name": "Self-Service",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": { "method": "GET", "url": "{{baseUrl}}/me/profile" }
+        },
+        {
+          "name": "Update My Profile (phone/address only)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/me/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876500000\",\n  \"address\": \"12 MG Road, Chennai\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/leaves",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leaveType\": \"CASUAL\",\n  \"startDate\": \"2026-09-01\",\n  \"endDate\": \"2026-09-03\",\n  \"reason\": \"Family event\"\n}"
+            }
+          }
+        },
+        {
+          "name": "My Leave Requests",
+          "request": { "method": "GET", "url": "{{baseUrl}}/leaves/my?page=0&size=20" }
+        },
+        {
+          "name": "Cancel My Leave Request",
+          "request": { "method": "POST", "url": "{{baseUrl}}/leaves/{{leaveId}}/cancel" }
+        }
+      ]
+    },
+    {
+      "name": "Employees (Admin)",
+      "item": [
+        {
+          "name": "List Employees",
+          "request": { "method": "GET", "url": "{{baseUrl}}/employees?page=0&size=20" }
+        },
+        {
+          "name": "List Employees (filtered + search)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/employees?departmentId={{departmentId}}&active=true&search=alice&page=0&size=20" }
+        },
+        {
+          "name": "Get Employee by ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/employees/{{employeeId}}" }
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/employees",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"departmentId\": 1,\n  \"designation\": \"Software Engineer\",\n  \"dateOfJoining\": \"2026-01-15\",\n  \"salary\": 75000,\n  \"phone\": \"9876543299\",\n  \"address\": \"Test Address\",\n  \"email\": \"testuser@company.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/employees/{{employeeId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Smith\",\n  \"departmentId\": 1,\n  \"designation\": \"Senior Software Engineer\",\n  \"dateOfJoining\": \"2021-03-15\",\n  \"salary\": 98000,\n  \"phone\": \"9876543210\",\n  \"address\": \"Updated address\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Soft Delete Employee",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/employees/{{employeeId}}" }
+        },
+        {
+          "name": "Reactivate Employee",
+          "request": { "method": "POST", "url": "{{baseUrl}}/employees/{{employeeId}}/reactivate" }
+        },
+        {
+          "name": "Employee Leave History",
+          "request": { "method": "GET", "url": "{{baseUrl}}/employees/{{employeeId}}/leave-history?page=0&size=20" }
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "List Departments",
+          "request": { "method": "GET", "url": "{{baseUrl}}/departments" }
+        },
+        {
+          "name": "Get Department by ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/departments/{{departmentId}}" }
+        },
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/departments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Marketing\",\n  \"description\": \"Marketing and brand operations\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/departments/{{departmentId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering\",\n  \"description\": \"Updated description\",\n  \"headEmployeeId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Department",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/departments/{{departmentId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Leave Management (Admin)",
+      "item": [
+        {
+          "name": "List All Leave Requests",
+          "request": { "method": "GET", "url": "{{baseUrl}}/leaves?status=PENDING&page=0&size=20" }
+        },
+        {
+          "name": "Approve Leave Request",
+          "request": { "method": "POST", "url": "{{baseUrl}}/leaves/{{leaveId}}/approve" }
+        },
+        {
+          "name": "Reject Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/leaves/{{leaveId}}/reject",
+            "body": { "mode": "raw", "raw": "{\n  \"rejectReason\": \"Insufficient coverage during this period\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports (Admin)",
+      "item": [
+        { "name": "Headcount by Department", "request": { "method": "GET", "url": "{{baseUrl}}/reports/headcount" } },
+        { "name": "Salary Stats by Department", "request": { "method": "GET", "url": "{{baseUrl}}/reports/salary-stats" } },
+        { "name": "Salary Band Distribution", "request": { "method": "GET", "url": "{{baseUrl}}/reports/salary-band" } },
+        { "name": "Leave Summary by Status", "request": { "method": "GET", "url": "{{baseUrl}}/reports/leave-summary" } },
+        { "name": "New Joiners", "request": { "method": "GET", "url": "{{baseUrl}}/reports/new-joiners?from=2026-01-01&to=2026-12-31" } },
+        { "name": "Upcoming Leaves", "request": { "method": "GET", "url": "{{baseUrl}}/reports/upcoming-leaves?days=30" } }
+      ]
+    },
+    {
+      "name": "Audit Logs (Admin)",
+      "item": [
+        {
+          "name": "List Audit Logs",
+          "request": { "method": "GET", "url": "{{baseUrl}}/audit-logs?page=0&size=20" }
+        },
+        {
+          "name": "List Audit Logs (filtered)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/audit-logs?entityType=EMPLOYEE&page=0&size=20" }
+        }
+      ]
+    }
+  ]
+}
