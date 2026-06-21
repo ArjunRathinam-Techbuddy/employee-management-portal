@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: emp_postgres
+    environment:
+      POSTGRES_DB: employee_portal
+      POSTGRES_USER: emp_user
+      POSTGRES_PASSWORD: emp_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U emp_user -d employee_portal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: emp_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/employee_portal
+      SPRING_DATASOURCE_USERNAME: emp_user
+      SPRING_DATASOURCE_PASSWORD: emp_pass
+      JWT_SECRET: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+      JWT_ACCESS_EXPIRY_MS: 900000
+      JWT_REFRESH_EXPIRY_MS: 604800000
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: emp_frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
